@@ -1,0 +1,6 @@
+INSTALLING MINITALK
+
+
+Minitalk cannot be automatically installed.  It is just a pair of server and
+client executable files.  If you wish to install it, simply copy the
+`mtserver' and `mtclient' files to a directory which is present in your $PATH.

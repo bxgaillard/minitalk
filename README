@@ -1,0 +1,153 @@
+MINITALK README
+
+
+Minitalk: a basic talk-like server/client
+Copyright (C) 2004 Benjamin Gaillard
+
+
+PRESENTATION
+============
+
+What Is Minitalk?
+-----------------
+
+Minitalk is a pair of server and client programs.  It lets users talk together
+through a server.  The server administrator can disconnect clients.  Commands
+are provided to clients so that they can transfer files between them.
+
+
+Why Does Minitalk Exist?
+------------------------
+
+Minitalk is a study project.  Is is the implementation of a program described
+in the `subject-fr.pdf' file (French only).
+
+
+Launching
+---------
+
+Execute the `mtserver' executable to launch the server.  `mtclient' is the
+client part of the project.  Use the `/connect' command in the client to
+connect to a server.  The syntax will not be explained here, it is sufficient
+to read the program indications.
+
+
+SPECIFIC FUNCTIONNING EXPLANATIONS
+==================================
+
+Note: these are shared between the server and the client and are present in
+      the `strlib' directory.
+
+Dynamic I/O Buffers
+-------------------
+
+Minitalk use dynamic input/output buffers to store, read data from and write
+data to the clients or the server.  A dynamic buffer is a linked list of
+dynamically allocated buffers; a dynamic input/output buffer is a pair of
+dynamic buffers: one for the input, the other for the output.
+
+
+Hash Tables
+-----------
+
+Hash tables are used to find a structure by its name.  This permits much
+shorter searches.  Explanation about the used hash function can be read in the
+beginning of the `strlib/hash.c' file.
+
+
+FILE TRANSFERS
+==============
+
+Presentation
+------------
+
+Minitalk allows users to send and receive files between them.  They can use
+two modes to archieve that: secure and fast.  Secure mode warranties that the
+file will be absolutely identical on the other end for the cost of a small
+overhead, while fast mode can cause losts or errors but is generally a bit
+faster.  But actually, there are no reason to use fast mode; it is only there
+for educational purposes.
+
+Protocol
+--------
+
+During a file transfer, the two clients behave as this:
+
++--------+---------------------------------+---------------------------------+
+|        |            Client 1             |            Client 2             |
+|  STEP  +---------------------------------+---------------------------------+
+|        | Console/Intern |     Socket     |     Socket     |    Internal    |
++--------+----------------+----------------+----------------+----------------+
+|   1    | transfer ...   |                |                |                |
+|   2    |                | send / receive |                |                |
+|   3    |                |                | send / receive |                |
+|   4    |                |                |                |   open file    |
+|   5    |                |                | accept/refuse  |                |
+|   6    |                | accept/refuse  |                |                |
+|   7    |read/write/error|                |                |                |
+|   8    |       <================== file transfer ==================>       |
++--------+----------------+----------------+----------------+----------------+
+
+File transfer requests (`/receive' or `/send') are done through the server.
+On each side, a file transfer is identified by a key long of 16 characters (64
+possible characters: [0-9A-Za-z+-]; the key is actually 96-bit long).  This
+key lets the clients identificate their transfers, but it also permits to hide
+informations to the other end (notably, the filename): this greatly enhances
+security in a hostile network.
+
+Note that `/' is not allowed in filename, to be sure that other users do not
+have access to private or confidential data.  It is not allowed to overwrite a
+file.
+
+
+Example of File Transfer
+------------------------
+
+User `Dew' wishes to get the `project.tar.gz' file from user `Core' and save
+it under the `prj-prophet.tgz' name.  Dew's IP address is 69.128.38.20 and
+Core's address is 192.168.42.1.
+
+1. /transfer Core:project.tar.gz prj-prophet.tgz
+   Open the `prj-prophet.tgz' file for writing.
+   Calculate a random key: `Ne-Y2U3n4Lh+jxkF'.
+   Check for the transfer mode, which is `secure'.
+
+2. /receive Core Ne-Y2U3n4Lh+jxkF secure project.tar.gz
+
+3. /receive Dew Ne-Y2U3n4Lh+jxkF secure project.tar.gz
+
+4. Check if `Dew' is allowed to transfer files.
+   Open the `project.tar.gz' file for reading.
+   Calculate a random key: `aMmqldYjb2WsQzpV'.
+   Open a random TCP port for listening: 45678.
+
+5. /accept Dew Ne-Y2U3n4Lh+jxkF aMmqldYjb2WsQzpV 45678
+
+6. /accept Core Ne-Y2U3n4Lh+jxkF aMmqldYjb2WsQzpV 192.168.42.1 45678
+
+7. Connect to 192.168.42.1:45678 and wait for the data to come.
+
+8. Dew reads data from the socket and writes it to the `prj-prophet.tgz' file
+   until a read on the socket gives an EOF.
+
+
+Have fun with Minitalk!
+
+
+------------------------------------------------------------------------------
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2 of the License, or (at your option)
+any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc., 59
+Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+------------------------------------------------------------------------------
